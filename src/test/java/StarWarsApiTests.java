@@ -61,13 +61,18 @@ public class StarWarsApiTests {
 
     @Test
     public void theOldestCharacterPlayedInAllFilms_task4(){
+        System.out.println("Task #4: Started. Requests list:");
+        int requestCounter = 0;
+
         // Request #1
         Films films = RestAssured.given()
+                .log().uri()
                 .get("/films")
                 .then()
                 .assertThat().statusCode(200)
                 .extract().response()
                 .as(Films.class);
+        requestCounter ++;
 
         // Get list of characters played in all films
         List<List<String>> characterUrlsListByFilm = films.getResults().stream().map(Film::getCharacters).toList();
@@ -83,6 +88,7 @@ public class StarWarsApiTests {
         for(String url : characterUrlsList){
             int personId = Integer.parseInt(url.replaceAll("\\D", ""));
             Character character = RestAssured.given()
+                    .log().uri()
                     .pathParam("id", personId)
                     .get("/people/{id}")
                     .then()
@@ -90,6 +96,7 @@ public class StarWarsApiTests {
                     .extract().response()
                     .as(Character.class);
             characters.add(character);
+            requestCounter ++;
         }
 
         // Get the oldest character
@@ -98,7 +105,7 @@ public class StarWarsApiTests {
                 .min(Comparator.comparingDouble(ch -> SWYearToDouble(ch.getBirth_year())))
                 .orElseThrow(() -> new NoSuchElementException("All characters have invalid birth_year value or not found"));
 
-        System.out.println("Task #4: The oldest character ever played in all Star Wars films is -> " + character.getName());
+        System.out.format("Task #4: Completed with %d requests. The oldest character ever played in all Star Wars films is -> %s%n", requestCounter, character.getName());
     }
 
     @Test
